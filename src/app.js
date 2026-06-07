@@ -94,23 +94,71 @@ function isLevelUpgraded(oldLevel, newLevel) {
 }
 
 function initData() {
+  const now = new Date().toISOString();
+  const today = now.split('T')[0];
+  const currentMonth = today.substring(0, 7);
   const elders = [
-    { name: '陈爷爷', id_card: '110101194001011234', gender: '男', birth_date: '1940-01-01', admission_date: '2023-01-15', room_number: 'A-101', current_level: '二级护理', contact_name: '陈小明', contact_phone: '13800138001', contact_relation: '儿子' },
-    { name: '李奶奶', id_card: '110101194502022345', gender: '女', birth_date: '1945-02-02', admission_date: '2023-03-20', room_number: 'B-203', current_level: '三级护理', contact_name: '李小红', contact_phone: '13800138002', contact_relation: '女儿' },
-    { name: '王爷爷', id_card: '110101193803033456', gender: '男', birth_date: '1938-03-03', admission_date: '2022-06-10', room_number: 'A-105', current_level: '一级护理', contact_name: '王大明', contact_phone: '13800138003', contact_relation: '儿子' }
+    { name: '陈爷爷', id_card: '110101194001011234', gender: '男', birth_date: '1940-01-01', admission_date: '2023-01-15', room_number: 'A-101', current_level: '二级护理', contact_name: '陈小明', contact_phone: '13800138001', contact_relation: '儿子', health_notes: '高血压、糖尿病' },
+    { name: '李奶奶', id_card: '110101194502022345', gender: '女', birth_date: '1945-02-02', admission_date: '2023-03-20', room_number: 'B-203', current_level: '三级护理', contact_name: '李小红', contact_phone: '13800138002', contact_relation: '女儿', health_notes: '关节炎、骨质疏松' },
+    { name: '王爷爷', id_card: '110101193803033456', gender: '男', birth_date: '1938-03-03', admission_date: '2022-06-10', room_number: 'A-105', current_level: '一级护理', contact_name: '王大明', contact_phone: '13800138003', contact_relation: '儿子', health_notes: '冠心病、轻度认知障碍' },
+    { name: '张奶奶', id_card: '110101194204044567', gender: '女', birth_date: '1942-04-04', admission_date: '2023-07-01', room_number: 'B-102', current_level: '自理级', contact_name: '张小花', contact_phone: '13800138004', contact_relation: '女儿', health_notes: '健康状况良好' },
+    { name: '刘爷爷', id_card: '110101193505055678', gender: '男', birth_date: '1935-05-05', admission_date: '2022-12-01', room_number: 'C-301', current_level: '特级护理', contact_name: '刘大伟', contact_phone: '13800138005', contact_relation: '侄子', health_notes: '阿尔茨海默症、卧床' }
   ];
   for (const e of elders) {
     const id = nextId('elders');
-    data.elders.push({ ...e, id, status: 'active', created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+    data.elders.push({ ...e, id, status: 'active', created_at: now, updated_at: now });
   }
-  const currentMonth = new Date().toISOString().substring(0, 7);
+  const assessmentScales = [
+    { elder_id: 1, assessor_id: 2, assessor_name: '李评估员', assessment_date: '2024-01-10', scale_type: 'standard', daily_living_score: 45, mental_status_score: 40, sensory_communication_score: 50, social_participation_score: 35, medical_condition_score: 30, nutritional_status_score: 45, skin_condition_score: 55, bowel_bladder_score: 50 },
+    { elder_id: 2, assessor_id: 2, assessor_name: '李评估员', assessment_date: '2024-01-12', scale_type: 'standard', daily_living_score: 60, mental_status_score: 55, sensory_communication_score: 65, social_participation_score: 50, medical_condition_score: 55, nutritional_status_score: 60, skin_condition_score: 65, bowel_bladder_score: 60 },
+    { elder_id: 3, assessor_id: 2, assessor_name: '李评估员', assessment_date: '2024-01-08', scale_type: 'standard', daily_living_score: 25, mental_status_score: 20, sensory_communication_score: 30, social_participation_score: 15, medical_condition_score: 18, nutritional_status_score: 28, skin_condition_score: 35, bowel_bladder_score: 22 },
+    { elder_id: 1, assessor_id: 2, assessor_name: '李评估员', assessment_date: '2024-02-15', scale_type: 'standard', daily_living_score: 35, mental_status_score: 30, sensory_communication_score: 40, social_participation_score: 25, medical_condition_score: 22, nutritional_status_score: 38, skin_condition_score: 45, bowel_bladder_score: 38 },
+    { elder_id: 5, assessor_id: 2, assessor_name: '李评估员', assessment_date: '2024-01-05', scale_type: 'standard', daily_living_score: 5, mental_status_score: 3, sensory_communication_score: 8, social_participation_score: 2, medical_condition_score: 5, nutritional_status_score: 10, skin_condition_score: 12, bowel_bladder_score: 6 }
+  ];
+  for (const s of assessmentScales) {
+    const id = nextId('assessmentScales');
+    const totalScore = calculateTotalScore(s);
+    data.assessmentScales.push({ ...s, id, total_score: totalScore, missing_items: [], can_grade: true, grade_reason: '', status: 'submitted', created_at: now });
+  }
+  const resultsData = [
+    { elder_id: 1, scale_id: 1, previous_level: null, new_level: '二级护理', level_upgraded: 0 },
+    { elder_id: 2, scale_id: 2, previous_level: null, new_level: '三级护理', level_upgraded: 0 },
+    { elder_id: 3, scale_id: 3, previous_level: null, new_level: '一级护理', level_upgraded: 0 },
+    { elder_id: 1, scale_id: 4, previous_level: '二级护理', new_level: '一级护理', level_upgraded: 1 },
+    { elder_id: 5, scale_id: 5, previous_level: null, new_level: '特级护理', level_upgraded: 0 }
+  ];
+  for (const r of resultsData) {
+    const scale = data.assessmentScales.find(s => s.id === r.scale_id);
+    const elder = data.elders.find(e => e.id === r.elder_id);
+    const id = nextId('assessmentResults');
+    const levelInfo = determineLevel(scale ? scale.total_score : 0);
+    data.assessmentResults.push({ id, elder_id: r.elder_id, scale_id: r.scale_id, previous_level: r.previous_level, new_level: r.new_level, level_upgraded: r.level_upgraded, assessment_date: scale ? scale.assessment_date : today, effective_date: today, total_score: scale ? scale.total_score : 0, level_reason: levelInfo.desc, status: 'effective', created_at: now });
+    if (elder) { elder.current_level = r.new_level; elder.updated_at = now; }
+  }
   for (const elder of data.elders) {
     const feeConfig = FEE_RULES[elder.current_level] || FEE_RULES['自理级'];
     const totalFee = feeConfig.base_fee + feeConfig.nursing_fee + feeConfig.meal_fee + feeConfig.other_fee;
     const id = nextId('feeRules');
-    data.feeRules.push({ id, elder_id: elder.id, result_id: null, care_level: elder.current_level, ...feeConfig, total_fee: totalFee, effective_month: currentMonth, status: 'active', created_at: new Date().toISOString() });
+    data.feeRules.push({ id, elder_id: elder.id, result_id: null, care_level: elder.current_level, ...feeConfig, total_fee: totalFee, effective_month: currentMonth, status: 'active', created_at: now });
   }
-  console.log('初始化数据完成');
+  const upgradedResults = data.assessmentResults.filter(r => r.level_upgraded === 1);
+  for (const result of upgradedResults) {
+    const elder = data.elders.find(e => e.id === result.elder_id);
+    if (elder && result.previous_level) {
+      const prevFee = FEE_RULES[result.previous_level] || FEE_RULES['自理级'];
+      const newFee = FEE_RULES[result.new_level];
+      const prevTotal = prevFee.base_fee + prevFee.nursing_fee + prevFee.meal_fee + prevFee.other_fee;
+      const newTotal = newFee.base_fee + newFee.nursing_fee + newFee.meal_fee + newFee.other_fee;
+      const nid = nextId('notifications');
+      data.notifications.push({ id: nid, elder_id: elder.id, result_id: result.id, contact_name: elder.contact_name || '家属', contact_phone: elder.contact_phone || '', notification_type: 'level_up', title: '护理等级上调通知', content: '您好，' + elder.name + '的护理等级已从' + result.previous_level + '调整为' + result.new_level + '。', previous_level: result.previous_level, new_level: result.new_level, previous_fee: prevTotal, new_fee: newTotal, status: 'unread', created_at: now });
+    }
+  }
+  console.log('初始化数据完成：');
+  console.log('  - 老人档案：' + data.elders.length + ' 位');
+  console.log('  - 评估量表：' + data.assessmentScales.length + ' 份');
+  console.log('  - 评估结论：' + data.assessmentResults.length + ' 条');
+  console.log('  - 通知消息：' + data.notifications.length + ' 条');
+  console.log('  - 费用规则：' + data.feeRules.length + ' 条');
 }
 
 app.get('/api/health', (req, res) => {
